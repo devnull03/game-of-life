@@ -16,7 +16,8 @@
 
 	gsap.registerPlugin(Draggable);
 
-	const BoardLimit = 100;
+	let BoardLimit = $state(100);
+	let baordUpdateStep = 15;
 	let simulationRunning = $state(false);
 
 	type Cell = [number, number];
@@ -83,9 +84,13 @@
 	} => {
 		if (BoardLimit - Math.abs(cell[0]) < 0) {
 			throw new Error('Cell x cordinate exceeds board limit');
+			// BoardLimit += baordUpdateStep;
+			// console.log(`Cell x cordinate exceeds board limit, new board limit: ${BoardLimit}`);
 		}
 		if (BoardLimit - Math.abs(cell[1]) < 0) {
 			throw new Error('Cell y cordinate exceeds board limit');
+			// BoardLimit += baordUpdateStep;
+			// console.log(`Cell y cordinate exceeds board limit, new board limit: ${BoardLimit}`);
 		}
 
 		let neighborCells: Cell[] = [
@@ -116,10 +121,11 @@
 
 	let globalAnimationID: number;
 	let startTime, now, elapsed;
-	let then = window?.performance.now();
-	let fps = 3;
-	let fpsInterval = 1000/fps;
-	
+	let then: number;
+	let fps = $state(3);
+	let fpsInterval = $derived(1000 / fps);
+	let fpsStep = 5;
+
 	const animation = (newtime: number) => {
 		globalAnimationID = requestAnimationFrame(animation);
 
@@ -163,21 +169,41 @@
 	});
 </script>
 
-<button
-	class="fixed bottom-4 right-4 z-[999] flex aspect-square items-center justify-center rounded-full border bg-gray-200 p-4 text-lg"
-	onclick={() => {
-		if (simulationRunning) {
-			cancelAnimationFrame(globalAnimationID);
-			simulationRunning = false;
-		} else {
-			globalAnimationID = requestAnimationFrame(animation);
-			simulationRunning = true;
-		}
-	}}
->
-	{simulationRunning ? 'pause' : 'play'}
-</button>
+<div class="fixed bottom-4 right-4 z-[999] flex flex-row items-center gap-2">
+	<button
+		class="flex aspect-square h-12 items-center justify-center rounded-full border bg-gray-200 text-lg"
+		onclick={() => {
+			if (fps - fpsStep <= 3) fps = 3;
+			else fps -= fpsStep;
+		}}
+	>
+		{'<<'}
+	</button>
 
+	<button
+		class="flex aspect-square h-12 items-center justify-center rounded-full border bg-gray-200 p-4 text-lg"
+		onclick={() => {
+			fps += fpsStep;
+		}}
+	>
+		{'>>'}
+	</button>
+
+	<button
+		class="flex aspect-square items-center justify-center rounded-full border bg-gray-200 p-4 text-lg"
+		onclick={() => {
+			if (simulationRunning) {
+				cancelAnimationFrame(globalAnimationID);
+				simulationRunning = false;
+			} else {
+				globalAnimationID = requestAnimationFrame(animation);
+				simulationRunning = true;
+			}
+		}}
+	>
+		{simulationRunning ? 'pause' : 'play'}
+	</button>
+</div>
 <main class="flex -translate-y-1/3 items-center justify-center bg-gray-100">
 	<div
 		id="board"
